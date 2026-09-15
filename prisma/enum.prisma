@@ -1,0 +1,32 @@
+enum Role {
+  USER
+  PREMIUM_USER
+  ADMIN
+}
+
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+}
+
+enum UserStatus {
+  NOT_VERIFIED
+  VERIFIED
+  DELETED
+  SUSPENDED
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  DELETED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+}

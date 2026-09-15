@@ -107,3 +107,11 @@ nest g interceptor common/response --no-spec --flat
   - Middleware: Common logging
   - Guard: For access control
   - Interceptor: Prepare fixed success response
+
+## Prisma Setup
+
+```
+npm install prisma --save-dev
+npx prisma init
+
+```
