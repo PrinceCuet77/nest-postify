@@ -4,9 +4,10 @@ import { UsersModule } from './users/users.module.js';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware.js';
 import { AuthController } from './auth/auth.controller.js';
 import { UsersController } from './users/users.controller.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
-  imports: [AuthModule, UsersModule],
+  imports: [PrismaModule, AuthModule, UsersModule],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

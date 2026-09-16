@@ -59,5 +59,5 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 .env
-/generated/prisma
+/src/generated
 /docs
