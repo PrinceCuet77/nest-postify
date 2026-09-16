@@ -12,13 +12,13 @@ enum AuthProvider {
 enum UserStatus {
   NOT_VERIFIED
   VERIFIED
-  DELETED
   SUSPENDED
 }
 
 enum PostStatus {
   DRAFT
   PUBLISHED
+  PREMIUM
   ARCHIVED
   DELETED
 }

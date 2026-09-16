@@ -1,0 +1,21 @@
+model Payment {
+  id            String  @id @default(uuid())
+  transactionId String  @unique
+  valId         String? @unique
+
+  amount   Decimal       @db.Decimal(10, 2)
+  currency String        @default("BDT")
+  status   PaymentStatus @default(PENDING)
+  method   String?
+
+  paidAt          DateTime?
+  gatewayResponse Json?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payments")
+}

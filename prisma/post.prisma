@@ -1,7 +1,0 @@
-model Post {
-  id            String  @id @default(uuid())
-
-  review Review[]
-  
-  @@map("posts")
-}
