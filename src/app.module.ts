@@ -1,9 +1,9 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module.js';
-import { UsersModule } from './users/users.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware.js';
-import { AuthController } from './auth/auth.controller.js';
-import { UsersController } from './users/users.controller.js';
+import { AuthController } from './modules/auth/auth.controller.js';
+import { UsersController } from './modules/users/users.controller.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
