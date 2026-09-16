@@ -1,6 +1,26 @@
-import { IsEmail, IsIn, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  IsStrongPassword,
+} from 'class-validator';
 
-export class LoginRegisterDto {
+export class RegisterDto {
+  @IsString()
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsStrongPassword(undefined, {
+    message:
+      'Password must be at least 8 characters long, and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.',
+  })
+  password: string;
+}
+
+export class LoginDto {
   @IsString()
   @IsNotEmpty()
   @IsEmail()
@@ -9,7 +29,4 @@ export class LoginRegisterDto {
   @IsString()
   @IsNotEmpty()
   password: string;
-
-  // @IsIn(['USER', 'PREMIUM_USER', 'ADMIN'])
-  // role: 'USER' | 'PREMIUM_USER' | 'ADMIN';
 }
