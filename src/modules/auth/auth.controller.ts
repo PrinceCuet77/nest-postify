@@ -11,10 +11,15 @@ export class AuthController {
     return this.authServices.registerUserInDB(loginRegisterDto);
   }
 
+  @Post('/login')
+  login(@Body() loginRegisterDto: LoginRegisterDto) {
+    return this.authServices.loginUser(loginRegisterDto);
+  }
+
   @Get('/logout')
   logout() {
     return {
-      logout: true
-    }
+      logout: true,
+    };
   }
 }
