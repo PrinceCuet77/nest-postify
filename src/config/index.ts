@@ -18,4 +18,5 @@ export default {
   google_callback_url: process.env.GOOGLE_REDIRECT_URI!,
   frontend_url: process.env.FRONTEND_URL,
   backend_api_url: process.env.BACKEND_API_URL,
+  avatar_s3_base_url: process.env.AVATAR_S3_BASE_URL,
 };

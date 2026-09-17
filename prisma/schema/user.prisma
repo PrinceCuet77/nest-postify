@@ -11,6 +11,7 @@ model User {
   avatarKey          String?
   isPremiumUser      Boolean    @default(false)
   hashedRefreshToken String?
+  activeProvider     AuthProvider?
   auths              Auth[]
 
   posts    Post[]

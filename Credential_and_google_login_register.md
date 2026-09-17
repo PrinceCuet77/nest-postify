@@ -6,22 +6,43 @@
 
 ## সূচিপত্র (Table of Contents)
 
-1. [সমস্যাটা কী ছিল — Problem Statement](#১-সমস্যাটা-কী-ছিল--problem-statement)
-2. [High-Level আর্কিটেকচার](#২-high-level-আর্কিটেকচার)
-3. [ডেটাবেজ ডিজাইন — কেন দুইটা টেবিল (User + Auth)](#৩-ডেটাবেজ-ডিজাইন--কেন-দুইটা-টেবিল-user--auth)
-4. [Passport.js Concepts — Strategy vs Guard](#৪-passportjs-concepts--strategy-vs-guard)
-5. [JWT Access Token + Refresh Token থিওরি](#৫-jwt-access-token--refresh-token-থিওরি)
-6. [ফোল্ডার স্ট্রাকচার ও প্রতিটা ফাইলের দায়িত্ব](#৬-ফোল্ডার-স্ট্রাকচার-ও-প্রতিটা-ফাইলের-দায়িত্ব)
-7. [Flow ১: Credentials দিয়ে Register](#৭-flow-১-credentials-দিয়ে-register)
-8. [Flow ২: Credentials দিয়ে Login](#৮-flow-২-credentials-দিয়ে-login)
-9. [Flow ৩: Google দিয়ে Login/Register (Account Linking)](#৯-flow-৩-google-দিয়ে-loginregister-account-linking)
-10. [Flow ৪: Protected Route Access (JWT Guard)](#১০-flow-৪-protected-route-access-jwt-guard)
-11. [Flow ৫: Refresh Token দিয়ে নতুন Token নেওয়া (Rotation)](#১১-flow-৫-refresh-token-দিয়ে-নতুন-token-নেওয়া-rotation)
-12. [Flow ৬: Logout (Token Revocation)](#১২-flow-৬-logout-token-revocation)
-13. [Security Decisions — কেন এভাবে করলাম](#১৩-security-decisions--কেন-এভাবে-করলাম)
-14. [যে বাগগুলো ফিক্স করা হয়েছে (Great Interview Story)](#১৪-যে-বাগগুলো-ফিক্স-করা-হয়েছে-great-interview-story)
-15. [API Reference (Quick Table)](#১৫-api-reference-quick-table)
-16. [Interview এ যা যা জিজ্ঞেস হতে পারে (Q&A)](#১৬-interview-এ-যা-যা-জিজ্ঞেস-হতে-পারে-qa)
+- [Credentials + Google Login/Register — সম্পূর্ণ Authentication Flow (Interview Prep Guide)](#credentials--google-loginregister--সম্পূর্ণ-authentication-flow-interview-prep-guide)
+  - [সূচিপত্র (Table of Contents)](#সূচিপত্র-table-of-contents)
+  - [১. সমস্যাটা কী ছিল — Problem Statement](#১-সমস্যাটা-কী-ছিল--problem-statement)
+  - [২. High-Level আর্কিটেকচার](#২-high-level-আর্কিটেকচার)
+  - [৩. ডেটাবেজ ডিজাইন — কেন দুইটা টেবিল (User + Auth)](#৩-ডেটাবেজ-ডিজাইন--কেন-দুইটা-টেবিল-user--auth)
+    - [কেন `password` টা `User` টেবিলে রাখলাম কিন্তু Login-method আলাদা টেবিলে?](#কেন-password-টা-user-টেবিলে-রাখলাম-কিন্তু-login-method-আলাদা-টেবিলে)
+  - [৪. Passport.js Concepts — Strategy vs Guard](#৪-passportjs-concepts--strategy-vs-guard)
+  - [৫. JWT Access Token + Refresh Token থিওরি](#৫-jwt-access-token--refresh-token-থিওরি)
+    - [কেন দুইটা আলাদা Token?](#কেন-দুইটা-আলাদা-token)
+    - [কেন Refresh Token টা DB-তে **hash** করে রাখা হয় (plain না)?](#কেন-refresh-token-টা-db-তে-hash-করে-রাখা-হয়-plain-না)
+    - [Token Rotation কী?](#token-rotation-কী)
+  - [৬. ফোল্ডার স্ট্রাকচার ও প্রতিটা ফাইলের দায়িত্ব](#৬-ফোল্ডার-স্ট্রাকচার-ও-প্রতিটা-ফাইলের-দায়িত্ব)
+  - [৭. Flow ১: Credentials দিয়ে Register](#৭-flow-১-credentials-দিয়ে-register)
+    - [Controller — খুব পাতলা (Thin Controller)](#controller--খুব-পাতলা-thin-controller)
+    - [Service — Account Linking Logic (সবচেয়ে গুরুত্বপূর্ণ অংশ)](#service--account-linking-logic-সবচেয়ে-গুরুত্বপূর্ণ-অংশ)
+  - [৮. Flow ২: Credentials দিয়ে Login](#৮-flow-২-credentials-দিয়ে-login)
+    - [LocalStrategy — এক লাইনের কাজ](#localstrategy--এক-লাইনের-কাজ)
+    - [Controller-এ Guard ব্যবহার](#controller-এ-guard-ব্যবহার)
+    - [`@CurrentUser()` কীভাবে কাজ করে?](#currentuser-কীভাবে-কাজ-করে)
+  - [৯. Flow ৩: Google দিয়ে Login/Register (Account Linking)](#৯-flow-৩-google-দিয়ে-loginregister-account-linking)
+    - [GoogleStrategy](#googlestrategy)
+    - [AuthService.validateOAuthLogin() — সিমেট্রিক Account Linking](#authservicevalidateoauthlogin--সিমেট্রিক-account-linking)
+  - [১০. Flow ৪: Protected Route Access (JWT Guard)](#১০-flow-৪-protected-route-access-jwt-guard)
+  - [১১. Flow ৫: Refresh Token দিয়ে নতুন Token নেওয়া (Rotation)](#১১-flow-৫-refresh-token-দিয়ে-নতুন-token-নেওয়া-rotation)
+    - [JwtRefreshStrategy — কেন `passReqToCallback: true`?](#jwtrefreshstrategy--কেন-passreqtocallback-true)
+    - [AuthService — দুইটা লেয়ারের Verification](#authservice--দুইটা-লেয়ারের-verification)
+  - [১২. Flow ৬: Logout (Token Revocation)](#১২-flow-৬-logout-token-revocation)
+  - [১৩. Security Decisions — কেন এভাবে করলাম](#১৩-security-decisions--কেন-এভাবে-করলাম)
+  - [১৪. যে বাগগুলো ফিক্স করা হয়েছে (Great Interview Story)](#১৪-যে-বাগগুলো-ফিক্স-করা-হয়েছে-great-interview-story)
+    - [বাগ ১: সব Exception `401`-এ পরিণত হয়ে যাচ্ছিল](#বাগ-১-সব-exception-401-এ-পরিণত-হয়ে-যাচ্ছিল)
+    - [বাগ ২: `LocalStrategy` ভুলভাবে `register` কল করছিল](#বাগ-২-localstrategy-ভুলভাবে-register-কল-করছিল)
+    - [বাগ ৩: `PrismaModule` মিসিং ছিল, পুরো অ্যাপ বুট হচ্ছিল না](#বাগ-৩-prismamodule-মিসিং-ছিল-পুরো-অ্যাপ-বুট-হচ্ছিল-না)
+  - [১৫. API Reference (Quick Table)](#১৫-api-reference-quick-table)
+  - [১৬. Feature Update: Active Login Provider দিয়ে Avatar Resolution](#১৬-feature-update-active-login-provider-দিয়ে-avatar-resolution)
+  - [১৭. Feature Update: Cookie-based Token Delivery](#১৭-feature-update-cookie-based-token-delivery)
+  - [১৮. Interview এ যা যা জিজ্ঞেস হতে পারে (Q\&A)](#১৮-interview-এ-যা-যা-জিজ্ঞেস-হতে-পারে-qa)
+    - [শেষ কথা](#শেষ-কথা)
 
 ---
 
@@ -89,6 +110,7 @@ erDiagram
         Role role
         UserStatus status
         string hashedRefreshToken "nullable — bcrypt দিয়ে hash করা"
+        AuthProvider activeProvider "nullable — সর্বশেষ কোন provider দিয়ে login হয়েছে"
     }
 
     AUTH {
@@ -108,6 +130,9 @@ model User {
   role               Role       @default(USER)
   status             UserStatus @default(NOT_VERIFIED)
   hashedRefreshToken String?
+  activeProvider     AuthProvider? // কোন provider দিয়ে বর্তমানে logged-in, দেখো ১৬ নং সেকশন
+  avatarUrlForGoogle String?
+  avatarKey          String?
   auths              Auth[]
   // ...
 }
@@ -140,11 +165,11 @@ model Auth {
 
 এই দুইটার পার্থক্য বুঝাটা খুবই গুরুত্বপূর্ণ, কারণ বেশিরভাগ মানুষ এই দুইটা গুলিয়ে ফেলে।
 
-| | **Strategy** | **Guard** |
-|---|---|---|
-| কাজ | ভ্যালিডেশনের **আসল লজিক** — user আসলেই valid কিনা সেটা যাচাই করা | Route-এ **কখন** সেই strategy চালানো হবে সেটা ঠিক করা |
-| উদাহরণ | `LocalStrategy.validate(email, password)` | `@UseGuards(LocalAuthGuard)` |
-| তুলনা | একজন security guard-এর "checklist" | দরজায় দাঁড়ানো আসল guard |
+|        | **Strategy**                                                     | **Guard**                                            |
+| ------ | ---------------------------------------------------------------- | ---------------------------------------------------- |
+| কাজ    | ভ্যালিডেশনের **আসল লজিক** — user আসলেই valid কিনা সেটা যাচাই করা | Route-এ **কখন** সেই strategy চালানো হবে সেটা ঠিক করা |
+| উদাহরণ | `LocalStrategy.validate(email, password)`                        | `@UseGuards(LocalAuthGuard)`                         |
+| তুলনা  | একজন security guard-এর "checklist"                               | দরজায় দাঁড়ানো আসল guard                            |
 
 ```typescript
 // src/modules/auth/guards/local-auth.guard.ts
@@ -225,7 +250,7 @@ compareToken(token: string, hashedToken: string): Promise<boolean> {
 
 প্রতিবার `/auth/refresh` কল করলে, শুধু নতুন Access Token না — নতুন **Refresh Token ও** বানিয়ে দেওয়া হয়, এবং পুরনোটা invalid করে দেওয়া হয় (DB তে নতুন hash বসিয়ে)। এতে কী লাভ?
 
-- যদি একটা refresh token কোনোভাবে চুরি হয়ে যায়, এবং **legitimate user** পরে সেটা দিয়ে refresh করে, তখন DB-তে থাকা hash-টা আপডেট হয়ে যাবে — ফলে **চোরের কাছে থাকা পুরনো token** পরেরবার আর কাজ করবে না। (একে বলে *reuse detection*-এর প্রাথমিক ধাপ)।
+- যদি একটা refresh token কোনোভাবে চুরি হয়ে যায়, এবং **legitimate user** পরে সেটা দিয়ে refresh করে, তখন DB-তে থাকা hash-টা আপডেট হয়ে যাবে — ফলে **চোরের কাছে থাকা পুরনো token** পরেরবার আর কাজ করবে না। (একে বলে _reuse detection_-এর প্রাথমিক ধাপ)।
 
 ---
 
@@ -511,14 +536,22 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
-  async validate(_at: string, _rt: string, profile: Profile, done: VerifyCallback) {
+  async validate(
+    _at: string,
+    _rt: string,
+    profile: Profile,
+    done: VerifyCallback,
+  ) {
     const email = profile.emails?.[0]?.value;
     if (!email) {
-      return done(new UnauthorizedException('Google account has no accessible email'), false);
+      return done(
+        new UnauthorizedException('Google account has no accessible email'),
+        false,
+      );
     }
 
     const user = await this.authService.validateOAuthLogin({
-      providerId: profile.id,       // Google Account এর unique, permanent id
+      providerId: profile.id, // Google Account এর unique, permanent id
       email,
       name: profile.displayName,
       avatarUrl: profile.photos?.[0]?.value,
@@ -656,7 +689,10 @@ sequenceDiagram
 
 ```typescript
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(private readonly authService: AuthService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -668,7 +704,10 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
 
   validate(req: Request, payload: JwtPayload) {
     const refreshToken = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
-    return this.authService.validateRefreshToken(payload.sub, refreshToken as string);
+    return this.authService.validateRefreshToken(
+      payload.sub,
+      refreshToken as string,
+    );
   }
 }
 ```
@@ -696,6 +735,7 @@ async validateRefreshToken(userId: string, refreshToken: string) {
 ```
 
 এখানে **দুই ধাপে verification** হচ্ছে:
+
 1. **JWT signature/expiry check** — `JwtRefreshStrategy` এর constructor options দিয়ে Passport নিজে থেকেই করে দেয়।
 2. **DB-তে stored hash-এর সাথে মিলিয়ে দেখা** — এটা extra layer, যেটার কারণেই **logout করলে refresh token সাথে সাথে অকেজো হয়ে যায়** — signature ভ্যালিড হলেও, DB তে hash না থাকলে (logout-এর পর `null` হয়ে যায়) reject হয়ে যাবে।
 
@@ -734,26 +774,29 @@ async logout(userId: string) {
 
 ## ১৩. Security Decisions — কেন এভাবে করলাম
 
-| Decision | কেন |
-|---|---|
-| Password `bcrypt` দিয়ে hash | Plain text password DB তে রাখা কখনোই ঠিক না — leak হলে সব ইউজারের password চুরি হয়ে যাবে |
-| Refresh Token ও `bcrypt` দিয়ে hash করে রাখা | একই যুক্তি — DB leak হলেও refresh token ব্যবহারযোগ্য থাকবে না |
-| Access আর Refresh Token-এর জন্য আলাদা secret | একটা compromise হলে আরেকটা সুরক্ষিত থাকে; blast radius কমে |
-| Access Token কম মেয়াদী, Refresh বেশি মেয়াদী | Leak হলে exposure window কম রাখা, কিন্তু UX ভালো রাখা (বারবার login না লাগা) |
-| Refresh Token Rotation (প্রতিবার নতুন pair) | Token reuse detect/prevent করা সহজ হয় |
-| `PassportModule.register({ session: false })` | পুরো auth system কে stateless রাখা — horizontally scale করা সহজ, কোনো sticky session লাগে না |
-| `omit: { password: true, hashedRefreshToken: true }` সব Prisma query তে | Response এ কখনো ভুল করেও sensitive field leak না হয় |
-| Strong Password Validation (`class-validator`) শুধু Register এ | Login এ শুধু presence check যথেষ্ট — strong-password rule নতুন করে চাপালে পুরনো valid user block হয়ে যেতে পারে |
+| Decision                                                                | কেন                                                                                                             |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Password `bcrypt` দিয়ে hash                                            | Plain text password DB তে রাখা কখনোই ঠিক না — leak হলে সব ইউজারের password চুরি হয়ে যাবে                       |
+| Refresh Token ও `bcrypt` দিয়ে hash করে রাখা                            | একই যুক্তি — DB leak হলেও refresh token ব্যবহারযোগ্য থাকবে না                                                   |
+| Access আর Refresh Token-এর জন্য আলাদা secret                            | একটা compromise হলে আরেকটা সুরক্ষিত থাকে; blast radius কমে                                                      |
+| Access Token কম মেয়াদী, Refresh বেশি মেয়াদী                           | Leak হলে exposure window কম রাখা, কিন্তু UX ভালো রাখা (বারবার login না লাগা)                                    |
+| Refresh Token Rotation (প্রতিবার নতুন pair)                             | Token reuse detect/prevent করা সহজ হয়                                                                          |
+| `PassportModule.register({ session: false })`                           | পুরো auth system কে stateless রাখা — horizontally scale করা সহজ, কোনো sticky session লাগে না                    |
+| `omit: { password: true, hashedRefreshToken: true }` সব Prisma query তে | Response এ কখনো ভুল করেও sensitive field leak না হয়                                                            |
+| Strong Password Validation (`class-validator`) শুধু Register এ          | Login এ শুধু presence check যথেষ্ট — strong-password rule নতুন করে চাপালে পুরনো valid user block হয়ে যেতে পারে |
+| Auth cookie গুলো `httpOnly` + conditional `secure`/`sameSite`           | `httpOnly` থাকলে frontend-এর JavaScript (XSS আক্রমণ হলেও) `document.cookie` দিয়ে token পড়তে পারবে না; `secure`/`sameSite` production-এ HTTPS + cross-site cookie ঠিকভাবে কাজ করার জন্য দরকার (দেখো ১৭ নং সেকশন) |
+| `refreshToken` cookie-র `path` শুধু `/api/v1/auth`-এ scope করা          | Browser এই cookie টা শুধু auth-related রুটেই (refresh/logout) পাঠাবে, বাকি সব API call-এ পাঠাবে না — exposure surface কমে |
 
 ---
 
 ## ১৪. যে বাগগুলো ফিক্স করা হয়েছে (Great Interview Story)
 
-ইন্টারভিউতে প্রায়ই জিজ্ঞেস করে — *"একটা কঠিন বাগ শেয়ার করো যেটা তুমি ডিবাগ করেছো।"* — নিচের দুইটা answer হিসেবে খুব ভালো।
+ইন্টারভিউতে প্রায়ই জিজ্ঞেস করে — _"একটা কঠিন বাগ শেয়ার করো যেটা তুমি ডিবাগ করেছো।"_ — নিচের দুইটা answer হিসেবে খুব ভালো।
 
 ### বাগ ১: সব Exception `401`-এ পরিণত হয়ে যাচ্ছিল
 
 **আগে যা ছিল:**
+
 ```typescript
 try {
   // ... validation logic যেখানে NotFoundException, ForbiddenException throw হয়
@@ -761,9 +804,11 @@ try {
   throw new UnauthorizedException('Failed to process login...'); // সব কিছু ধরে ফেলছে!
 }
 ```
+
 এখানে সমস্যা হলো — `try` ব্লকের ভিতরেই ইচ্ছাকৃতভাবে `NotFoundException` (404) বা `ForbiddenException` (403) throw করা হচ্ছিল, কিন্তু বাইরের `catch (error)` সেটাকেও ধরে ফেলে একটা generic `401` বানিয়ে ফেলছিল। ফলে client কখনোই আসল error status (404/403/409) পাচ্ছিল না — সব সময় `401` পেত, যেটা debugging এবং frontend-এর error handling দুইটাই কঠিন করে দেয়।
 
 **Fix:**
+
 ```typescript
 try {
   // ...
@@ -776,17 +821,20 @@ try {
   throw new InternalServerErrorException('...');
 }
 ```
+
 **শিক্ষা:** `try/catch`-এ generic catch করার আগে সবসময় ভাবতে হবে — এই catch ব্লকটা কি **শুধু unexpected error** ধরার জন্য, নাকি **সব ধরনের error** এক করে ফেলছে। NestJS-এ `HttpException` (এবং তার সব subclass — `NotFoundException`, `ForbiddenException` ইত্যাদি) থেকে আসা error সবসময় "ইচ্ছাকৃত, already-handled" error, এগুলোকে re-throw করাই উচিত।
 
 ### বাগ ২: `LocalStrategy` ভুলভাবে `register` কল করছিল
 
 **আগে:**
+
 ```typescript
 async validate(email: string, password: string): Promise<any> {
   const user = await this.authService.registerUserInDB({ email, password }); // ❌ Login flow-এ Register কল হচ্ছে!
   // ...
 }
 ```
+
 `/auth/login` রুটে গেলে ভেতরে ভেতরে actual register (নতুন ইউজার তৈরির) লজিক রান হচ্ছিল — ভুল password দিলেও naive ভাবে হয়তো নতুন ডেটা তৈরি হয়ে যাচ্ছিল বা conflict দিত। এটা fix করে `validateCredentials()` নামে একটা আলাদা মেথড বানানো হয়েছে যেটা শুধু **check** করে, কিছু তৈরি করে না।
 
 ### বাগ ৩: `PrismaModule` মিসিং ছিল, পুরো অ্যাপ বুট হচ্ছিল না
@@ -806,39 +854,199 @@ export class PrismaModule {}
 
 ## ১৫. API Reference (Quick Table)
 
-| Method | Route | Guard | Body | Response |
-|---|---|---|---|---|
-| `POST` | `/api/v1/auth/register` | — | `{ email, password }` | `201 { user, accessToken, refreshToken }` |
-| `POST` | `/api/v1/auth/login` | `LocalAuthGuard` | `{ email, password }` | `200 { user, accessToken, refreshToken }` |
-| `GET` | `/api/v1/auth/google` | `GoogleAuthGuard` | — | `302` redirect → Google consent screen |
-| `GET` | `/api/v1/auth/google/callback` | `GoogleAuthGuard` | — (query থেকে `code` আসে) | `302` redirect → `FRONTEND_URL/oauth/callback?accessToken=...&refreshToken=...` |
-| `POST` | `/api/v1/auth/refresh` | `JwtRefreshAuthGuard` | — (Header: `Authorization: Bearer <refreshToken>`) | `200 { accessToken, refreshToken }` |
-| `POST` | `/api/v1/auth/logout` | `JwtAuthGuard` | — (Header: `Authorization: Bearer <accessToken>`) | `200 { loggedOut: true }` |
+| Method | Route                          | Guard                 | Body / Token Source                                                        | Response                                                                                    |
+| ------ | ------------------------------ | --------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `POST` | `/api/v1/auth/register`        | —                     | `{ email, password }`                                                      | `201 { user, accessToken, refreshToken }` + `Set-Cookie: accessToken, refreshToken`          |
+| `POST` | `/api/v1/auth/login`           | `LocalAuthGuard`      | `{ email, password }`                                                      | `200 { user, accessToken, refreshToken }` + `Set-Cookie: accessToken, refreshToken`          |
+| `GET`  | `/api/v1/auth/google`          | `GoogleAuthGuard`     | —                                                                           | `302` redirect → Google consent screen                                                        |
+| `GET`  | `/api/v1/auth/google/callback` | `GoogleAuthGuard`     | — (query থেকে `code` আসে)                                                   | `302` redirect → `FRONTEND_URL/oauth/callback?accessToken=...&refreshToken=...` + `Set-Cookie` |
+| `POST` | `/api/v1/auth/refresh`         | `JwtRefreshAuthGuard` | Header `Authorization: Bearer <refreshToken>` **অথবা** Cookie `refreshToken` | `200 { accessToken, refreshToken }` + `Set-Cookie` (rotation)                                 |
+| `POST` | `/api/v1/auth/logout`          | `JwtAuthGuard`        | Header `Authorization: Bearer <accessToken>` **অথবা** Cookie `accessToken`   | `200 { loggedOut: true }` + কুকি দুটো clear হয়ে যায়                                          |
+
+> **নোট:** `user` অবজেক্টে এখন একটা computed `avatarUrl` ফিল্ড ও থাকে (দেখো ১৬ নং সেকশন), যেটা `activeProvider` অনুযায়ী `avatarUrlForGoogle` অথবা `avatarKey` থেকে বানানো S3 লিংক — এই দুটোর মধ্যে কোনটা দেখাবে সেটা frontend-কে আর নিজে থেকে ঠিক করতে হয় না। এবং `JwtAuthGuard`/`JwtRefreshAuthGuard` দিয়ে protected যেকোনো রুটেই এখন Bearer header অথবা cookie — দুইভাবেই authenticate করা যায় (দেখো ১৭ নং সেকশন)।
 
 ---
 
-## ১৬. Interview এ যা যা জিজ্ঞেস হতে পারে (Q&A)
+## ১৬. Feature Update: Active Login Provider দিয়ে Avatar Resolution
+
+**সমস্যা:** Account Linking-এর কারণে একজন User Credentials আর Google — দুইভাবেই login করতে পারে, তাই তার প্রোফাইলে দুইটা সম্ভাব্য avatar source থাকতে পারে: Google থেকে আসা `avatarUrlForGoogle`, আর নিজে আপলোড করা ছবির জন্য S3-তে রাখা `avatarKey`। আগে কোনো ফিল্ডই ছিল না যেটা বলে দেয় ইউজার **এই মুহূর্তে** কোন provider দিয়ে logged-in — ফলে frontend-এর কোনো উপায় ছিল না বুঝার যে দুইটার মধ্যে কোনটা দেখানো উচিত।
+
+**সমাধান:** `User` মডেলে একটা নতুন nullable কলাম `activeProvider AuthProvider?` যোগ করা হয়েছে (migration: `add_active_provider_to_user`), যেটা **শুধু আসল authentication ঘটনার সময়** আপডেট হয় — মানে Register, Credentials Login, এবং Google Login/Register-এর সময়। **Refresh Token দিয়ে token renew করার সময় এটা পাল্টানো হয় না**, কারণ refresh কোনো নতুন authentication না, existing session-এরই বর্ধিত রূপ।
+
+```prisma
+// prisma/schema/user.prisma
+model User {
+  // ...
+  avatarUrlForGoogle String?
+  avatarKey          String?
+  activeProvider     AuthProvider? // CREDENTIALS অথবা GOOGLE — সর্বশেষ কোন provider দিয়ে login হয়েছে
+}
+```
+
+`AuthService`-এর তিনটা জায়গায় এটা সেট করা হয়:
+
+```typescript
+// registerUserInDB() — CREDENTIALS দিয়ে register/link করার সময়
+activeProvider: AuthProvider.CREDENTIALS,
+
+// validateCredentials() — CREDENTIALS দিয়ে সফল login-এর সময়
+const updatedUser = await this.prisma.user.update({
+  where: { id: user.id },
+  data: { activeProvider: AuthProvider.CREDENTIALS },
+  omit: SANITIZED_USER_OMIT,
+});
+
+// validateOAuthLogin() — GOOGLE দিয়ে register/login-এর সময়
+activeProvider: AuthProvider.GOOGLE,
+```
+
+**এখন অ্যাভাটার resolve হয় কীভাবে?** — `src/modules/auth/auth.util.ts`-এ একটা ছোট helper আছে যেটা `activeProvider` দেখে ঠিক করে কোন avatar প্রমোট করা হবে, আর sanitized user object-এর সাথে একটা computed `avatarUrl` ফিল্ড জুড়ে দেয়:
+
+```typescript
+// src/modules/auth/auth.util.ts
+function resolveAvatarUrl(user: UserWithAvatarSources): string | null {
+  if (user.activeProvider === AuthProvider.GOOGLE) {
+    return user.avatarUrlForGoogle;
+  }
+
+  if (user.activeProvider === AuthProvider.CREDENTIALS && user.avatarKey) {
+    return `${config.avatar_s3_base_url}/${user.avatarKey}`;
+  }
+
+  return null;
+}
+
+export function withAvatarUrl<T extends UserWithAvatarSources>(user: T) {
+  return { ...user, avatarUrl: resolveAvatarUrl(user) };
+}
+```
+
+`registerUserInDB`, `validateCredentials`, ও `validateOAuthLogin` — এই তিনটা মেথডই এখন তাদের return value-কে `withAvatarUrl(...)` দিয়ে wrap করে দেয়, ফলে `/register`, `/login`, `/google/callback` — এই তিনটা endpoint-এর response-এ থাকা `user` object-এ সরাসরি একটা রেডি-টু-ইউজ `avatarUrl` ফিল্ড পাওয়া যায়। Frontend-কে আর `avatarUrlForGoogle` vs `avatarKey` নিয়ে কোনো সিদ্ধান্ত নিতে হয় না।
+
+> **নোট:** `avatarKey`-এর জন্য প্রকৃত S3 upload ফিচারটা এখনো implement করা হয়নি এই প্রজেক্টে — শুধু URL বানানোর convention-টা এখন ঠিক করা হয়েছে, একটা নতুন env var `AVATAR_S3_BASE_URL`-এর মাধ্যমে (`.env.example`-এ যোগ করা হয়েছে)। ভবিষ্যতে avatar-upload মডিউল বানানোর সময় এই একই কনভেনশন ব্যবহার হবে।
+
+**কেন Refresh-এর সময় `activeProvider` পাল্টানো হয় না?** — কারণ Refresh Token flow-টা logically একটা "নতুন login" না, এটা existing session-কেই এগিয়ে নেওয়া। যদি Refresh-এর সময়ও provider লেখা হতো, তাহলে সেটা লিখতে হতো payload থেকে (JWT-তে provider রাখতে হতো), যেটা অপ্রয়োজনীয় জটিলতা — provider পাল্টানোর একমাত্র বৈধ trigger হলো ইউজার নিজে একটা নির্দিষ্ট provider দিয়ে সচেতনভাবে login করা।
+
+---
+
+## ১৭. Feature Update: Cookie-based Token Delivery
+
+**সমস্যা:** আগে সব ক্ষেত্রে (Register, Login, Refresh) token শুধু response body-তে (JSON) পাঠানো হতো, আর Google callback-এ redirect URL-এর query param হিসেবে। এতে frontend-কে নিজে থেকে token গুলো `localStorage`/`sessionStorage`-এ রেখে, প্রতিটা request-এ ম্যানুয়ালি `Authorization` header বসাতে হতো — যেটা কাজ করে, কিন্তু `localStorage` XSS আক্রমণের কাছে বেশি exposed (যেকোনো ইনজেক্টেড script `localStorage.getItem()` দিয়ে সরাসরি token পড়তে পারে)।
+
+**সমাধান:** এখন থেকে backend token issue করার সময় (Register, Login, Google callback, Refresh) response body/redirect-এর পাশাপাশি **`httpOnly` cookie হিসেবেও** `accessToken` ও `refreshToken` সেট করে দেয়। Response body-তে token রাখা বাদ দেওয়া হয়নি (backward-compatible — মোবাইল অ্যাপ বা non-browser client গুলো এখনও চাইলে Bearer header ব্যবহার করতে পারবে), কিন্তু ব্রাউজার-বেসড frontend এখন চাইলে সম্পূর্ণভাবে cookie-নির্ভর হয়ে যেতে পারে, `localStorage`-এ কিছু না রেখেই।
+
+```typescript
+// src/main.ts
+app.use(cookieParser()); // req.cookies পার্স করার জন্য
+
+app.enableCors({
+  origin: [config.frontend_url, 'googleusercontent.com'],
+  credentials: true, // এটা আগে থেকেই ছিল — cross-site cookie পাঠানোর জন্য দরকার
+});
+```
+
+```typescript
+// src/modules/auth/cookie.util.ts
+const baseCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+};
+
+// refreshToken cookie শুধু /api/v1/auth রুটেই (refresh/logout) পাঠানো হয়
+const REFRESH_COOKIE_PATH = '/api/v1/auth';
+
+export function setAuthCookies(res: Response, tokens: AuthTokens): void {
+  res.cookie('accessToken', tokens.accessToken, {
+    ...baseCookieOptions,
+    path: '/',
+    maxAge: ms(config.jwt_access_expires_in),
+  });
+
+  res.cookie('refreshToken', tokens.refreshToken, {
+    ...baseCookieOptions,
+    path: REFRESH_COOKIE_PATH,
+    maxAge: ms(config.jwt_refresh_expires_in),
+  });
+}
+
+export function clearAuthCookies(res: Response): void {
+  res.clearCookie('accessToken', { ...baseCookieOptions, path: '/' });
+  res.clearCookie('refreshToken', {
+    ...baseCookieOptions,
+    path: REFRESH_COOKIE_PATH,
+  });
+}
+```
+
+`AuthController`-এর প্রতিটা token-issuing endpoint এখন `@Res({ passthrough: true })` নিয়ে `setAuthCookies(res, tokens)` কল করে (Google callback-এ যেহেতু আগে থেকেই `@Res()` non-passthrough ব্যবহার হচ্ছিল, সেখানে redirect করার ঠিক আগে cookie সেট করা হয়)। `logout`-এ `clearAuthCookies(res)` কল করে দুইটা cookie-ই মুছে ফেলা হয়।
+
+**কেন `passthrough: true`?** — Nest-এ কোনো handler-এ `@Res()` ইনজেক্ট করলে ডিফল্টভাবে Nest ধরে নেয় তুমি নিজেই response সম্পূর্ণভাবে ম্যানেজ করবে (`res.send()`/`res.json()` নিজে কল করতে হবে), আর handler-এর `return` value উপেক্ষা করা হয়। `passthrough: true` দিলে Nest-কে বলা হয় — "আমি শুধু `res`-এর উপর side-effect (যেমন cookie বসানো) করতে চাই, কিন্তু response body/status ঠিক করার কাজ তুমিই (Nest) করো, আমার `return` value ব্যবহার করে" — যেটা আগের মতোই `{ user, ...tokens }` return করার প্যাটার্নটা বজায় রাখে।
+
+### JwtStrategy / JwtRefreshStrategy — এখন দুই জায়গা থেকে token নেয়
+
+`passport-jwt`-এর `ExtractJwt.fromExtractors([...])` দিয়ে একাধিক extractor একসাথে chain করা যায় — প্রথমটা match করলে সেটাই ব্যবহার হয়, না হলে পরেরটা try করে:
+
+```typescript
+// src/modules/auth/strategies/jwt.strategy.ts
+function extractFromCookie(req: Request): string | null {
+  return req.cookies?.accessToken ?? null;
+}
+
+super({
+  jwtFromRequest: ExtractJwt.fromExtractors([
+    ExtractJwt.fromAuthHeaderAsBearerToken(), // ১ম priority — API client/Postman
+    extractFromCookie, // ২য় priority — browser cookie
+  ]),
+  // ...
+});
+```
+
+`JwtRefreshStrategy`-তেও ঠিক একইভাবে `refreshToken` cookie যোগ করা হয়েছে, এবং যেহেতু ওখানে raw token-টা DB hash-এর সাথে মিলিয়ে দেখতে হয় (`passReqToCallback: true`), `validate()`-এর ভেতরেও একই combined extractor ব্যবহার করা হয়েছে — যাতে raw token সঠিকভাবে বের হয়ে আসে, সে হেডার থেকে আসুক বা cookie থেকে।
+
+**কেন `accessToken`-এর `path: '/'` কিন্তু `refreshToken`-এর `path: '/api/v1/auth'`?** — `accessToken` cookie প্রতিটা protected API call-এর সাথে দরকার, তাই তার path পুরো app জুড়ে খোলা রাখতে হয়। কিন্তু `refreshToken` শুধু `/auth/refresh` আর `/auth/logout` — এই দুইটা রুটেই দরকার, তাই সেটার path সংকুচিত করে দেওয়া হয়েছে যাতে ব্রাউজার অন্য কোনো API request-এ এই বেশি-sensitive, বেশি-মেয়াদী token টা পাঠিয়েই না দেয়।
+
+**কেন `sameSite: 'none'` শুধু production-এ?** — Production-এ frontend আর backend সাধারণত আলাদা domain-এ থাকে (cross-site), আর cross-site cookie পাঠানোর জন্য ব্রাউজার `SameSite=None; Secure` বাধ্যতামূলক করে (আর `Secure` মানেই HTTPS লাগবে)। Local development-এ যেহেতু সাধারণত `http://localhost`-এই সব চলে (HTTPS ছাড়া), `sameSite: 'lax'` আর `secure: false` ব্যবহার করা হয়েছে, নাহলে ব্রাউজার dev এনভায়রনমেন্টে cookie-টাই সেট হতে দিত না।
+
+---
+
+## ১৮. Interview এ যা যা জিজ্ঞেস হতে পারে (Q&A)
 
 **Q: Access Token আর Refresh Token আলাদা কেন রাখলে, একটাই তো যথেষ্ট হতে পারতো?**
+
 > একটা মাত্র দীর্ঘমেয়াদী token রাখলে সেটা leak হলে অনেকদিন ধরে misuse হতে পারবে। তাই short-lived Access Token (ঘন ঘন ব্যবহারের জন্য) আর long-lived Refresh Token (শুধু নতুন Access Token নেওয়ার জন্য, কম exposure) — এই split করাটাই industry standard, একে বলে "token pair pattern"।
 
 **Q: Refresh Token DB তে কেন hash করে রাখলে, নাকি সরাসরি রাখলেই তো যাচাই করা সহজ হতো?**
+
 > Password-এর মতোই — DB compromise হলে attacker যেন সরাসরি ব্যবহারযোগ্য token না পায়, সেজন্য bcrypt দিয়ে hash করে রাখা হয়েছে, ঠিক যেমন password রাখা হয়।
 
 **Q: Access token stateless রাখলে, কাউকে instant ban করতে চাইলে কী করবে?**
+
 > এটা একটা known trade-off। সমাধান হতে পারে — একটা short TTL blacklist (Redis-এ) রাখা ব্যানড user id-দের জন্য, অথবা Access Token-এর TTL আরও ছোট রাখা (যেমন ৫ মিনিট) যাতে ban দ্রুত effective হয়।
 
 **Q: Account Linking-এর সময় কীভাবে নিশ্চিত হচ্ছো যে একটা Google account দিয়ে অন্য কারো account হাইজ্যাক করা যাবে না?**
+
 > Google নিজেই ইমেইল verify করে OAuth এর মাধ্যমে (`email_verified` ফ্ল্যাগ থাকে profile-এ) — মানে Google বলছে এই ইমেইলের প্রকৃত মালিক এই ব্যক্তি। তাই একই email হলে একই ব্যক্তি ধরে নেওয়া নিরাপদ। (ভবিষ্যতে আরও strict করতে চাইলে `profile.emails[0].verified === true` explicitly চেক করে নেওয়া যায়।)
 
 **Q: `JwtStrategy.validate()`-এ DB call নেই কেন, এটা কি সমস্যা না?**
+
 > এটা ইচ্ছাকৃত ডিজাইন — JWT-র মূল সুবিধাই stateless verification। DB call বাদ দেওয়াতে প্রতিটা authenticated request দ্রুত হয়। Trade-off হলো, ইউজারকে সাথে সাথে suspend করলে তার existing (এখনো valid) Access Token চলতে থাকবে যতক্ষণ না সেটার মেয়াদ শেষ হয়।
 
 **Q: Guard আর Strategy একসাথে কেন লাগে, একটাতেই তো কাজ হতে পারতো?**
+
 > Separation of concerns — Guard route-level decision নেয় (কোন strategy কোথায় apply হবে), Strategy করে আসল authentication logic। এতে একটা Strategy একাধিক জায়গায় reuse করা সহজ হয়, এবং কোড টেস্ট করাও সহজ হয় (strategy আলাদাভাবে unit-test করা যায়)।
 
 **Q: কেন Google callback এ redirect ব্যবহার করলে, JSON response কেন দিলে না?**
-> কারণ OAuth flow browser-driven — ইউজার browser-এ Google-এর consent screen-এ যায়, তারপর browser-ই callback URL এ ফিরে আসে (এটা কোনো AJAX/fetch call না, এটা একটা full page navigation)। তাই backend থেকে JSON রেসপন্স দিলে সেটা user সরাসরি browser-এ raw JSON হিসেবে দেখবে, frontend app সেটা handle করতে পারবে না। তাই frontend-এর একটা নির্দিষ্ট route এ token গুলো নিয়ে redirect করে দেওয়া হয়, frontend সেখান থেকে token গুলো read করে (query params থেকে) localStorage/cookie-তে সেভ করে নেয়।
+
+> কারণ OAuth flow browser-driven — ইউজার browser-এ Google-এর consent screen-এ যায়, তারপর browser-ই callback URL এ ফিরে আসে (এটা কোনো AJAX/fetch call না, এটা একটা full page navigation)। তাই backend থেকে JSON রেসপন্স দিলে সেটা user সরাসরি browser-এ raw JSON হিসেবে দেখবে, frontend app সেটা handle করতে পারবে না। তাই frontend-এর একটা নির্দিষ্ট route এ token গুলো নিয়ে redirect করে দেওয়া হয়, frontend সেখান থেকে token গুলো read করে (query params থেকে) localStorage/cookie-তে সেভ করে নেয়। এখন যেহেতু backend থেকেই `Set-Cookie` করে দেওয়া হয়, frontend চাইলে redirect-এর query param গুলো একদমই ব্যবহার না করেও শুধু cookie-র উপর ভরসা করতে পারে।
+
+**Q: token response body আর cookie — দুই জায়গাতেই কেন পাঠাচ্ছ, একটাতে পাঠালেই তো হতো?**
+
+> দুই ধরনের client সাপোর্ট করার জন্য। ব্রাউজার-বেসড frontend httpOnly cookie ব্যবহার করে সবচেয়ে নিরাপদভাবে (JS দিয়ে token পড়া যায় না, তাই XSS হলেও token চুরি করা কঠিন)। কিন্তু মোবাইল অ্যাপ, Postman, বা অন্য কোনো server-to-server client-এর জন্য cookie জিনিসটা স্বাভাবিক না — ওদের জন্য response body-তে থাকা token গুলো `Authorization: Bearer` header হিসেবে পাঠানোই সহজ। তাই দুইটাই রাখা হয়েছে — কে কোনটা ব্যবহার করবে সেটা client-এর choice।
+
+**Q: `activeProvider` ফিল্ড ছাড়াই তো `avatarUrlForGoogle` আর `avatarKey` — দুইটা দেখে ইচ্ছামতো avatar বাছাই করা যেত, নতুন কলাম কেন লাগলো?**
+
+> দুইটা ফিল্ড থেকে "কোনটা এখন সঠিক" — এই সিদ্ধান্তটা fallback দিয়ে অনুমান করা (যেমন, "যেটা null না সেটা দেখাও") ভুল হতে পারে যদি একজন User দুই provider-ই link করে রাখে (Account Linking-এর কারণে এটা সম্পূর্ণ বৈধ অবস্থা) — তখন দুইটা ফিল্ডই non-null থাকবে, কিন্তু ইউজার আসলে **এই মুহূর্তে** কোন identity দিয়ে ঢুকেছে সেটা কোনো fallback logic দিয়ে বলা সম্ভব না, কারণ সেটা runtime-এর তথ্য (কোন strategy দিয়ে login হয়েছে), ডেটার shape থেকে derive করা যায় না। তাই এই মুহূর্তের authentication event থেকে explicitly `activeProvider` লিখে রাখা হয়েছে।
 
 ---
 

@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './common/response.interceptor.js';
@@ -8,6 +9,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('/api/v1');
+
+  app.use(cookieParser());
 
   app.enableCors({
     origin: [config.frontend_url, 'googleusercontent.com'], // Allow only this origin

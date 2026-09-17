@@ -20,6 +20,7 @@ import { TokenService } from './token.service.js';
 import { LoginDto, RegisterDto } from './dto/auth.dto.js';
 import { AuthTokens, JwtPayload } from './interfaces/jwt-payload.interface.js';
 import { GoogleProfile } from './interfaces/google-profile.interface.js';
+import { withAvatarUrl } from './auth.util.js';
 import config from '../../config/index.js';
 
 const SANITIZED_USER_OMIT = {
@@ -77,6 +78,7 @@ export class AuthService {
             data: {
               password: hashedPassword,
               status: UserStatus.VERIFIED,
+              activeProvider: AuthProvider.CREDENTIALS,
               auths: {
                 create: {
                   provider: AuthProvider.CREDENTIALS,
@@ -92,6 +94,7 @@ export class AuthService {
               password: hashedPassword,
               role: Role.USER,
               status: UserStatus.VERIFIED,
+              activeProvider: AuthProvider.CREDENTIALS,
               auths: {
                 create: {
                   provider: AuthProvider.CREDENTIALS,
@@ -102,7 +105,7 @@ export class AuthService {
             omit: SANITIZED_USER_OMIT,
           });
 
-      return createdOrUpdatedUser;
+      return withAvatarUrl(createdOrUpdatedUser);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -157,14 +160,13 @@ export class AuthService {
         throw new UnauthorizedException('Email or password is incorrect');
       }
 
-      const {
-        password: _password,
-        hashedRefreshToken: _hashedRefreshToken,
-        auths: _auths,
-        ...sanitizedUser
-      } = user;
+      const updatedUser = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { activeProvider: AuthProvider.CREDENTIALS },
+        omit: SANITIZED_USER_OMIT,
+      });
 
-      return sanitizedUser;
+      return withAvatarUrl(updatedUser);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -212,24 +214,28 @@ export class AuthService {
         });
       }
 
-      return this.prisma.user.update({
+      const updatedUser = await this.prisma.user.update({
         where: { id: existingUser.id },
         data: {
           name: existingUser.name ?? name,
           avatarUrlForGoogle: avatarUrl,
           status: UserStatus.VERIFIED,
+          activeProvider: AuthProvider.GOOGLE,
         },
         omit: SANITIZED_USER_OMIT,
       });
+
+      return withAvatarUrl(updatedUser);
     }
 
-    return this.prisma.user.create({
+    const createdUser = await this.prisma.user.create({
       data: {
         email,
         name,
         avatarUrlForGoogle: avatarUrl,
         role: Role.USER,
         status: UserStatus.VERIFIED,
+        activeProvider: AuthProvider.GOOGLE,
         auths: {
           create: {
             provider: AuthProvider.GOOGLE,
@@ -239,6 +245,8 @@ export class AuthService {
       },
       omit: SANITIZED_USER_OMIT,
     });
+
+    return withAvatarUrl(createdUser);
   }
 
   async validateRefreshToken(userId: string, refreshToken: string) {
