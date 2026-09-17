@@ -7,7 +7,7 @@ interface UserWithAvatarSources {
   avatarKey: string | null;
 }
 
-function resolveAvatarUrl(user: UserWithAvatarSources): string | null {
+export function resolveAvatarUrl(user: UserWithAvatarSources): string | null {
   if (user.activeProvider === AuthProvider.GOOGLE) {
     return user.avatarUrlForGoogle;
   }
@@ -17,15 +17,4 @@ function resolveAvatarUrl(user: UserWithAvatarSources): string | null {
   }
 
   return null;
-}
-
-/**
- * Promotes the correct avatar source based on the provider the user is
- * currently logged in with, so clients don't have to pick between
- * avatarUrlForGoogle/avatarKey themselves.
- */
-export function withAvatarUrl<T extends UserWithAvatarSources>(
-  user: T,
-): T & { avatarUrl: string | null } {
-  return { ...user, avatarUrl: resolveAvatarUrl(user) };
 }

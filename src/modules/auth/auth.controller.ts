@@ -15,7 +15,7 @@ import { LocalAuthGuard } from './guards/local-auth.guard.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard.js';
 import { GoogleAuthGuard } from './guards/google-auth.guard.js';
-import { CurrentUser } from './decorators/current-user.decorator.js';
+import { CurrentUser } from '../../common/decorators/current-user.decorator.js';
 import { setAuthCookies, clearAuthCookies } from './cookie.util.js';
 import config from '../../config/index.js';
 

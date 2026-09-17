@@ -18,13 +18,13 @@ one-time snapshot.
 | Module                | Total APIs | Done  | Stub  | Not started |
 | --------------------- | ---------- | ----- | ----- | ----------- |
 | Auth                  | 6          | 6     | 0     | 0           |
-| Users                 | 5          | 0     | 2     | 3           |
+| Users                 | 4          | 1     | 0     | 3           |
 | Posts                 | 7          | 0     | 0     | 7           |
 | Comments              | 7          | 0     | 0     | 7           |
 | Replies               | 6          | 0     | 0     | 6           |
 | Payments (SSLCommerz) | 8          | 0     | 0     | 8           |
-| Admin                 | 16         | 0     | 0     | 16          |
-| **Total**             | **55**     | **6** | **2** | **47**      |
+| Admin                 | 16         | 1     | 0     | 15          |
+| **Total**             | **54**     | **8** | **0** | **46**      |
 
 ---
 
@@ -39,17 +39,16 @@ one-time snapshot.
 | ✅     | POST   | `/auth/refresh`         | `JwtRefreshAuthGuard`, rotates access + refresh tokens                    |
 | ✅     | POST   | `/auth/logout`          | `JwtAuthGuard`, clears `hashedRefreshToken` + cookies                     |
 
-## 2. Users (`src/modules/users/`) — 0/5 done, 2 stub
+## 2. Users (`src/modules/users/`) — 1/4 done
 
-| Status | Method | Endpoint           | Notes                                                                                               |
-| ------ | ------ | ------------------ | --------------------------------------------------------------------------------------------------- |
-| 🚧     | GET    | `/users`           | Stub — `getAllUsers()` returns `[]`; needs real pagination/listing (and likely an admin-only guard) |
-| 🚧     | GET    | `/users/:id`       | Stub — returns hardcoded `{ name, age }`; needs real lookup + `SANITIZED_USER_OMIT`                 |
-| ⬜     | GET    | `/users/me`        | Return the logged-in user's own profile via `@CurrentUser()`                                        |
-| ⬜     | PATCH  | `/users/me`        | Update own info — `name`, `bio`, `profession`                                                       |
-| ⬜     | PATCH  | `/users/me/avatar` | Upload/replace avatar image, stored in S3 (`avatarKey` + `avatar_s3_base_url` from config)          |
+| Status | Method | Endpoint               | Notes                                                                                                                    |
+| ------ | ------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| ✅     | GET    | `/user/getMyProfile`    | `JwtAuthGuard`; returns the logged-in user's own profile via `@CurrentUser()`, `SANITIZED_USER_OMIT` + `withAvatarUrl` |
+| ⬜     | PATCH  | `/user/updateProfile`   | Update own info — `name`, `bio`, `profession`                                                                          |
+| ⬜     | PATCH  | `/user/updateAvatar`    | Upload/replace avatar image, stored in S3 (`avatarKey` + `avatar_s3_base_url` from config)                             |
+| ⬜     | POST   | `/user/changePassword`  | Change own password (credentials users only)                                                                           |
 
-> Note: `@Controller('users')` combined with `@Get('/users')` currently resolves to `/api/v1/users/users`, not `/api/v1/users` — worth fixing when this module is built out for real.
+> The old stub methods on `UsersController` (`getAllUsers`/`getSingleUser`, previously mounted at `/users/users` and `/users/:id`) were removed as part of building this module out for real; user listing now lives under `/admin/getAllUsers` (section 7) instead.
 
 ## 3. Posts — 0/7 done (module not yet created)
 
@@ -109,20 +108,21 @@ Fixed premium subscription fee: **200 BDT**.
 
 > Requires new config values (store ID/password, sandbox flag, success/fail/cancel/ipn URLs) in `src/config/index.ts`, following the existing pattern used for Google OAuth. SSLCommerz's success/fail/cancel callbacks are `POST` with `application/x-www-form-urlencoded` bodies, not JSON — the global `ValidationPipe`/DTOs for these three routes need to account for that.
 
-## 7. Admin — 0/16 done (module not yet created)
+## 7. Admin (`src/modules/admin/`) — 1/16 done
 
 Admin-only surface for monitoring and controlling the platform: user
 moderation, content moderation, payment oversight, and platform stats.
-Every route below sits behind `JwtAuthGuard` plus a new role check — the
-codebase has no `RolesGuard`/`@Roles()` decorator yet, so that's a
-prerequisite for this whole module (the `Role` enum already has `ADMIN`,
-it's just not enforced anywhere).
+Every route below sits behind `JwtAuthGuard` plus `RolesGuard` +
+`@Roles(Role.ADMIN)` — `RolesGuard`/`@Roles()` now exist at
+`src/common/guards/roles.guard.ts` / `src/common/decorators/roles.decorator.ts`,
+reading `request.user.role` (already present on the JWT payload) via
+`Reflector`, so this prerequisite is resolved for the rest of the module.
 
 ### 7.1 User management
 
 | Status | Method | Endpoint                  | Notes                                                                                                              |
 | ------ | ------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| ⬜     | GET    | `/admin/users`              | List all users, filterable by `role`, `status`, `isPremiumUser`, paginated                                        |
+| ✅     | GET    | `/admin/getAllUsers`        | `JwtAuthGuard` + `RolesGuard`(`Role.ADMIN`); lists all users, `SANITIZED_USER_OMIT`, newest first — no pagination/filtering yet |
 | ⬜     | GET    | `/admin/users/:id`          | Full detail on any single user (still excluding `password`/`hashedRefreshToken`)                                  |
 | ⬜     | PATCH  | `/admin/users/:id/status`   | Change `UserStatus` — verify a user, or suspend/unsuspend one                                                     |
 | ⬜     | PATCH  | `/admin/users/:id/role`     | Promote/demote a user's `Role` (e.g. grant `ADMIN`, or revoke `PREMIUM_USER` manually)                            |

@@ -23,7 +23,7 @@ import { GoogleProfile } from './interfaces/google-profile.interface.js';
 import { withAvatarUrl } from './auth.util.js';
 import config from '../../config/index.js';
 
-const SANITIZED_USER_OMIT = {
+export const SANITIZED_USER_OMIT = {
   password: true,
   hashedRefreshToken: true,
 } as const;

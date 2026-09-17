@@ -1,20 +1,46 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { getErrorDetails } from '../../common/error.util.js';
+import { SANITIZED_USER_OMIT } from '../auth/auth.service.js';
+import { resolveAvatarUrl } from '../auth/auth.util.js';
 
 @Injectable()
 export class UsersService {
-  getAllUsers() {
-    return [];
-  }
+  private readonly logger = new Logger(UsersService.name);
 
-  getSingleUser(id: number) {
-    // const user = this.getAllUsers.find(ticket => ticket.id === id);
-    // if (!ticket) {
-    //   throw new NotFoundException(`Ticket with ID ${id} not found!`);
-    // }
+  constructor(private readonly prisma: PrismaService) {}
 
-    return {
-      name: 'Prince',
-      age: 22,
-    };
+  async getMyProfile(userId: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        omit: SANITIZED_USER_OMIT,
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      return { ...user, avatarUrl: resolveAvatarUrl(user) };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      this.logger.error('Error while trying to fetch profile:', {
+        ...getErrorDetails(error),
+        userId,
+      });
+
+      throw new InternalServerErrorException(
+        'Failed to fetch profile. Please try again.',
+      );
+    }
   }
 }
